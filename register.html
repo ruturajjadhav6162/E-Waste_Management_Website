@@ -1,0 +1,104 @@
+<?php
+session_start();
+if (isset($_SESSION["user"])) {
+   header("Location: index.php");
+}
+?>
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Webleb - Sign Up</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.9/css/unicons.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="style3.css">
+</head>
+<body>
+  <?php
+  if (isset($_POST["submit"])) {
+     $fullName = $_POST["fullname"];
+     $email = $_POST["email"];
+     $password = $_POST["password"];
+     $passwordRepeat = $_POST["repeat_password"];
+     
+     $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+     $errors = array();
+     
+     if (empty($fullName) OR empty($email) OR empty($password) OR empty($passwordRepeat)) {
+      array_push($errors,"All fields are required");
+     }
+     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+      array_push($errors, "Email is not valid");
+     }
+     if (strlen($password)<8) {
+      array_push($errors,"Password must be at least 8 charactes long");
+     }
+     if ($password!==$passwordRepeat) {
+      array_push($errors,"Password does not match");
+     }
+     require_once "database.php";
+     $sql = "SELECT * FROM users WHERE email = '$email'";
+     $result = mysqli_query($conn, $sql);
+     $rowCount = mysqli_num_rows($result);
+     if ($rowCount>0) {
+      array_push($errors,"Email already exists!");
+     }
+     if (count($errors)>0) {
+      foreach ($errors as  $error) {
+          echo "<div class='alert alert-danger'>$error</div>";
+      }
+     }else{
+      
+      $sql = "INSERT INTO users (full_name, email, password) VALUES ( ?, ?, ? )";
+      $stmt = mysqli_stmt_init($conn);
+      $prepareStmt = mysqli_stmt_prepare($stmt,$sql);
+      if ($prepareStmt) {
+          mysqli_stmt_bind_param($stmt,"sss",$fullName, $email, $passwordHash);
+          mysqli_stmt_execute($stmt);
+          echo "<div class='alert alert-success'>You are registered successfully.</div>";
+      }else{
+          die("Something went wrong");
+      }
+     }
+    
+
+  }
+  ?>
+  <div class="section">
+    <form action="registration.php" method="post">
+    <div class="container">
+      <div class="row full-height justify-content-center">
+        <div class="col-12 text-center align-self-center py-5">
+          <div class="section pb-5 pt-5 pt-sm-2 text-center">
+            <h4 class="mb-3 pb-3">Sign Up</h4>
+            <div class="form-group">
+              <input type="text" class="email" id="name"name="fullname" placeholder="Full Name" required>
+              <i class="input-icon uil uil-user"></i>
+            </div>	
+            <div class="form-group mt-2">
+              <input type="tel" class="email" id="name" name="email"placeholder="Phone Number" required>
+              <i class="input-icon uil uil-phone"></i>
+            </div>	
+            <div class="form-group mt-2">
+              <input type="email" class="email" id="email"name="password"placeholder="Email" required>
+              <i class="input-icon uil uil-at"></i>
+            </div>
+            <div class="form-group mt-2">
+              <input type="password" class="email" id="password" placeholder="Password" required>
+              <i class="input-icon uil uil-lock-alt"></i>
+            </div>
+            <button class="btn mt-4" id="reg"><a href="login.php"></a>Register</button>
+            <script>document.getElementById('reg').addEventListener('click', function() {
+                window.location.href = 'login';
+              });</script>  
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </form>
+  <script src="js/form.js"></script>
+</body>
+</html>
